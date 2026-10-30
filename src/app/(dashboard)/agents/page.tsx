@@ -5,6 +5,7 @@ import DashboardHeader from '@/components/DashboardHeader';
 import { useBusinessStore } from '@/store/business';
 import { useVoiceStore } from '@/store/voice';
 import { Agent, AgentType, VoiceId } from '@/types';
+import { SUPPORTED_LANGUAGES } from '@/constants';
 import {
   Bot,
   Plus,
@@ -12,6 +13,8 @@ import {
   Settings2,
   Trash2,
   CalendarCheck,
+  Languages,
+  Sparkles,
 } from 'lucide-react';
 
 export default function AgentsPage() {
@@ -29,6 +32,7 @@ export default function AgentsPage() {
   const [role, setRole] = useState('Front Desk AI Receptionist');
   const [type, setType] = useState<AgentType>('inbound');
   const [voiceId, setVoiceId] = useState<VoiceId>('alloy');
+  const [language, setLanguage] = useState('en-US');
   const [voiceSpeed, setVoiceSpeed] = useState(1.0);
   const [voicePitch, setVoicePitch] = useState(1.0);
   const [greetingMessage, setGreetingMessage] = useState('');
@@ -37,19 +41,28 @@ export default function AgentsPage() {
   const [autoBookAppointments, setAutoBookAppointments] = useState(true);
   const [collectLeadInfo, setCollectLeadInfo] = useState(true);
 
+  const handleLanguageChange = (newLangCode: string) => {
+    setLanguage(newLangCode);
+    const langObj = SUPPORTED_LANGUAGES.find((l) => l.code === newLangCode);
+    if (langObj && !greetingMessage.trim()) {
+      setGreetingMessage(langObj.defaultGreeting);
+    }
+  };
+
   const handleOpenAdd = () => {
     setEditingAgent(null);
     setName(`${business?.name || 'Business'} Receptionist`);
     setRole('Front Desk AI Receptionist');
     setType('inbound');
     setVoiceId('alloy');
+    setLanguage('en-US');
     setVoiceSpeed(1.0);
     setVoicePitch(1.0);
     setGreetingMessage(
       `Thank you for calling ${business?.name || 'our office'}. My name is Maya, your AI assistant. How may I assist you today?`
     );
     setSystemPrompt(
-      `You are an empathetic, articulate AI voice receptionist for ${business?.name}. You answer inquiries, book appointments, and collect customer details.`
+      `You are an empathetic, articulate AI voice receptionist for ${business?.name}. You answer inquiries, book appointments, and collect customer details in the selected language.`
     );
     setForwardingPhone(business?.phoneNumber || '');
     setAutoBookAppointments(true);
@@ -63,6 +76,7 @@ export default function AgentsPage() {
     setRole(agent.role);
     setType(agent.type);
     setVoiceId(agent.voiceId);
+    setLanguage(agent.language || 'en-US');
     setVoiceSpeed(agent.voiceSpeed);
     setVoicePitch(agent.voicePitch);
     setGreetingMessage(agent.greetingMessage);
@@ -83,6 +97,7 @@ export default function AgentsPage() {
         role,
         type,
         voiceId,
+        language,
         voiceSpeed,
         voicePitch,
         greetingMessage,
@@ -99,6 +114,7 @@ export default function AgentsPage() {
         role,
         type,
         voiceId,
+        language,
         voiceSpeed,
         voicePitch,
         greetingMessage,
@@ -177,6 +193,17 @@ export default function AgentsPage() {
 
                 <div className="mt-4 space-y-2 text-xs">
                   <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#141926] text-slate-300">
+                    <span className="text-slate-400">Language:</span>
+                    <span className="font-bold text-rose-300 flex items-center gap-1.5">
+                      <Languages className="w-3.5 h-3.5 text-rose-400" />
+                      <span>
+                        {SUPPORTED_LANGUAGES.find((l) => l.code === (agent.language || 'en-US'))?.flag}{' '}
+                        {SUPPORTED_LANGUAGES.find((l) => l.code === (agent.language || 'en-US'))?.nativeName || 'English'}
+                      </span>
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#141926] text-slate-300">
                     <span className="text-slate-400">Direction / Type:</span>
                     <span className="font-bold capitalize text-rose-400">
                       {agent.type} Calling
@@ -243,7 +270,7 @@ export default function AgentsPage() {
                 {editingAgent ? 'Edit AI Voice Agent' : 'Create New AI Calling Agent'}
               </h3>
               <p className="text-xs text-slate-400 mb-5">
-                Customize persona, voice model synthesis, system knowledge prompt, and tool integration.
+                Customize persona, multilingual language (60+ languages), voice model synthesis, and system prompt.
               </p>
 
               <form onSubmit={handleSave} className="space-y-4 text-xs">
@@ -280,6 +307,23 @@ export default function AgentsPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block font-semibold text-slate-300 mb-1">
+                      Language (60+ Supported)
+                    </label>
+                    <select
+                      value={language}
+                      onChange={(e) => handleLanguageChange(e.target.value)}
+                      className="input-field"
+                    >
+                      {SUPPORTED_LANGUAGES.map((l) => (
+                        <option key={l.code} value={l.code}>
+                          {l.flag} {l.nativeName} ({l.name})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">
                       Call Type
                     </label>
                     <select
@@ -310,21 +354,21 @@ export default function AgentsPage() {
                       <option value="shimmer">Shimmer (Upscale & Reassuring)</option>
                     </select>
                   </div>
+                </div>
 
-                  <div>
-                    <label className="block font-semibold text-slate-300 mb-1">
-                      Voice Speed ({voiceSpeed}x)
-                    </label>
-                    <input
-                      type="range"
-                      min="0.8"
-                      max="1.3"
-                      step="0.05"
-                      value={voiceSpeed}
-                      onChange={(e) => setVoiceSpeed(parseFloat(e.target.value))}
-                      className="w-full mt-2 accent-rose-500"
-                    />
-                  </div>
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">
+                    Voice Speed ({voiceSpeed}x)
+                  </label>
+                  <input
+                    type="range"
+                    min="0.8"
+                    max="1.3"
+                    step="0.05"
+                    value={voiceSpeed}
+                    onChange={(e) => setVoiceSpeed(parseFloat(e.target.value))}
+                    className="w-full mt-2 accent-rose-500"
+                  />
                 </div>
 
                 <div>

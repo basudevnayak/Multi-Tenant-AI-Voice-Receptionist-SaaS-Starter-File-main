@@ -9,6 +9,12 @@ import {
   CallLog,
   Campaign,
   WidgetConfig,
+  CatalogItem,
+  StoreOrder,
+  CustomerInquiry,
+  SupportTicket,
+  AppNotification,
+  AccountAppeal,
 } from '@/types';
 import {
   INITIAL_BUSINESSES,
@@ -20,6 +26,12 @@ import {
   INITIAL_CALLS,
   INITIAL_CAMPAIGNS,
   INITIAL_WIDGET_CONFIGS,
+  INITIAL_CATALOG_ITEMS,
+  INITIAL_STORE_ORDERS,
+  INITIAL_INQUIRIES,
+  INITIAL_SUPPORT_TICKETS,
+  INITIAL_NOTIFICATIONS,
+  INITIAL_APPEALS,
 } from '@/constants';
 
 interface BusinessState {
@@ -33,6 +45,13 @@ interface BusinessState {
   calls: CallLog[];
   campaigns: Campaign[];
   widgetConfigs: Record<string, WidgetConfig>;
+  catalogItems: CatalogItem[];
+  orders: StoreOrder[];
+  inquiries: CustomerInquiry[];
+  supportTickets: SupportTicket[];
+  notifications: AppNotification[];
+  appeals: AccountAppeal[];
+  suspendedBusinessIds: string[];
 
   // Actions
   setActiveBusiness: (id: string) => void;
@@ -45,6 +64,11 @@ interface BusinessState {
   getActiveCalls: () => CallLog[];
   getActiveCampaigns: () => Campaign[];
   getActiveWidgetConfig: () => WidgetConfig | undefined;
+  getActiveCatalogItems: () => CatalogItem[];
+  getActiveOrders: () => StoreOrder[];
+  getActiveInquiries: () => CustomerInquiry[];
+  getActiveSupportTickets: () => SupportTicket[];
+  getActiveNotifications: () => AppNotification[];
 
   // Add / Update Entities
   addBusiness: (business: Business) => void;
@@ -69,6 +93,35 @@ interface BusinessState {
 
   addCampaign: (campaign: Campaign) => void;
   updateCampaign: (id: string, partial: Partial<Campaign>) => void;
+
+  // Catalog Actions
+  addCatalogItem: (item: CatalogItem) => void;
+  updateCatalogItem: (id: string, partial: Partial<CatalogItem>) => void;
+  deleteCatalogItem: (id: string) => void;
+
+  // Order Actions
+  addOrder: (order: StoreOrder) => void;
+  updateOrderStatus: (id: string, orderStatus: StoreOrder['orderStatus'], trackingEvent?: { title: string; location: string; timestamp: string }) => void;
+
+  // Inquiry Actions
+  addInquiry: (inquiry: CustomerInquiry) => void;
+  replyToInquiry: (id: string, response: string) => void;
+
+  // Support Ticket Actions
+  addSupportTicket: (ticket: SupportTicket) => void;
+  replyToTicket: (ticketId: string, reply: SupportTicket['replies'][0]) => void;
+  updateTicketStatus: (ticketId: string, status: SupportTicket['status']) => void;
+
+  // Notification Actions
+  addNotification: (notification: AppNotification) => void;
+  markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
+
+  // Admin Suspension & Appeals
+  suspendBusiness: (id: string, reason: string) => void;
+  reactivateBusiness: (id: string) => void;
+  submitAppeal: (appeal: AccountAppeal) => void;
+  resolveAppeal: (appealId: string, status: 'approved' | 'rejected', adminNotes?: string) => void;
 }
 
 export const useBusinessStore = create<BusinessState>((set, get) => ({
@@ -82,6 +135,13 @@ export const useBusinessStore = create<BusinessState>((set, get) => ({
   calls: INITIAL_CALLS,
   campaigns: INITIAL_CAMPAIGNS,
   widgetConfigs: INITIAL_WIDGET_CONFIGS,
+  catalogItems: INITIAL_CATALOG_ITEMS,
+  orders: INITIAL_STORE_ORDERS,
+  inquiries: INITIAL_INQUIRIES,
+  supportTickets: INITIAL_SUPPORT_TICKETS,
+  notifications: INITIAL_NOTIFICATIONS,
+  appeals: INITIAL_APPEALS,
+  suspendedBusinessIds: [],
 
   setActiveBusiness: (id: string) => set({ activeBusinessId: id }),
 
@@ -133,13 +193,38 @@ export const useBusinessStore = create<BusinessState>((set, get) => ({
         businessId: activeBusinessId,
         title: 'AI Voice Receptionist',
         subtitle: '24/7 Intelligent Customer Care',
-        primaryColor: '#1e4db7',
+        primaryColor: '#e11d48',
         buttonText: 'Talk to AI Assistant',
         greeting: 'Hello! How can I help you today?',
         position: 'bottom-right',
         isActive: true,
       }
     );
+  },
+
+  getActiveCatalogItems: () => {
+    const { catalogItems, activeBusinessId } = get();
+    return catalogItems.filter((item) => item.businessId === activeBusinessId);
+  },
+
+  getActiveOrders: () => {
+    const { orders, activeBusinessId } = get();
+    return orders.filter((order) => order.businessId === activeBusinessId);
+  },
+
+  getActiveInquiries: () => {
+    const { inquiries, activeBusinessId } = get();
+    return inquiries.filter((inq) => inq.businessId === activeBusinessId);
+  },
+
+  getActiveSupportTickets: () => {
+    const { supportTickets, activeBusinessId } = get();
+    return supportTickets.filter((ticket) => ticket.businessId === activeBusinessId);
+  },
+
+  getActiveNotifications: () => {
+    const { notifications, activeBusinessId } = get();
+    return notifications.filter((notif) => !notif.businessId || notif.businessId === activeBusinessId);
   },
 
   addBusiness: (business) =>
@@ -215,7 +300,7 @@ export const useBusinessStore = create<BusinessState>((set, get) => ({
         businessId,
         title: 'AI Voice Receptionist',
         subtitle: '24/7 Support',
-        primaryColor: '#1e4db7',
+        primaryColor: '#e11d48',
         buttonText: 'Talk with AI Assistant',
         greeting: 'Hello! How can I help you today?',
         position: 'bottom-right',
@@ -238,4 +323,112 @@ export const useBusinessStore = create<BusinessState>((set, get) => ({
     set((state) => ({
       campaigns: state.campaigns.map((c) => (c.id === id ? { ...c, ...partial } : c)),
     })),
+
+  addCatalogItem: (item) =>
+    set((state) => ({
+      catalogItems: [item, ...state.catalogItems],
+    })),
+
+  updateCatalogItem: (id, partial) =>
+    set((state) => ({
+      catalogItems: state.catalogItems.map((item) => (item.id === id ? { ...item, ...partial } : item)),
+    })),
+
+  deleteCatalogItem: (id) =>
+    set((state) => ({
+      catalogItems: state.catalogItems.filter((item) => item.id !== id),
+    })),
+
+  addOrder: (order) =>
+    set((state) => ({
+      orders: [order, ...state.orders],
+    })),
+
+  updateOrderStatus: (id, orderStatus, trackingEvent) =>
+    set((state) => ({
+      orders: state.orders.map((o) => {
+        if (o.id !== id) return o;
+        const newEvents = trackingEvent ? [...(o.trackingEvents || []), trackingEvent] : o.trackingEvents;
+        return { ...o, orderStatus, trackingEvents: newEvents };
+      }),
+    })),
+
+  addInquiry: (inquiry) =>
+    set((state) => ({
+      inquiries: [inquiry, ...state.inquiries],
+    })),
+
+  replyToInquiry: (id, response) =>
+    set((state) => ({
+      inquiries: state.inquiries.map((inq) => (inq.id === id ? { ...inq, response, status: 'answered' } : inq)),
+    })),
+
+  addSupportTicket: (ticket) =>
+    set((state) => ({
+      supportTickets: [ticket, ...state.supportTickets],
+    })),
+
+  replyToTicket: (ticketId, reply) =>
+    set((state) => ({
+      supportTickets: state.supportTickets.map((ticket) =>
+        ticket.id === ticketId
+          ? {
+              ...ticket,
+              status: 'in_progress',
+              replies: [...ticket.replies, reply],
+            }
+          : ticket
+      ),
+    })),
+
+  updateTicketStatus: (ticketId, status) =>
+    set((state) => ({
+      supportTickets: state.supportTickets.map((t) => (t.id === ticketId ? { ...t, status } : t)),
+    })),
+
+  addNotification: (notification) =>
+    set((state) => ({
+      notifications: [notification, ...state.notifications],
+    })),
+
+  markNotificationRead: (id) =>
+    set((state) => ({
+      notifications: state.notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
+    })),
+
+  markAllNotificationsRead: () =>
+    set((state) => ({
+      notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
+    })),
+
+  suspendBusiness: (id, reason) =>
+    set((state) => ({
+      suspendedBusinessIds: [...new Set([...state.suspendedBusinessIds, id])],
+    })),
+
+  reactivateBusiness: (id) =>
+    set((state) => ({
+      suspendedBusinessIds: state.suspendedBusinessIds.filter((bid) => bid !== id),
+    })),
+
+  submitAppeal: (appeal) =>
+    set((state) => ({
+      appeals: [appeal, ...state.appeals],
+    })),
+
+  resolveAppeal: (appealId, status, adminNotes) =>
+    set((state) => {
+      const appeal = state.appeals.find((a) => a.id === appealId);
+      const newSuspended =
+        status === 'approved' && appeal
+          ? state.suspendedBusinessIds.filter((id) => id !== appeal.businessId)
+          : state.suspendedBusinessIds;
+
+      return {
+        appeals: state.appeals.map((a) =>
+          a.id === appealId ? { ...a, status, reviewedAt: new Date().toISOString(), adminNotes } : a
+        ),
+        suspendedBusinessIds: newSuspended,
+      };
+    }),
 }));

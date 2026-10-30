@@ -69,7 +69,7 @@ export function useRealtimeVoice() {
           const recognition = new SpeechRecognition();
           recognition.continuous = true;
           recognition.interimResults = true;
-          recognition.lang = 'en-US';
+          recognition.lang = activeAgent.language || 'en-US';
 
           recognition.onresult = (event: any) => {
             let interim = '';
@@ -257,25 +257,37 @@ export function useRealtimeVoice() {
       stopListening();
       synthRef.current.cancel();
 
+      const langCode = activeAgent.language || 'en-US';
       const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = langCode;
       utterance.rate = activeAgent.voiceSpeed || 1.0;
       utterance.pitch = activeAgent.voicePitch || 1.0;
 
-      // Select natural voice
+      // Select natural voice matching the agent's language
       const voices = synthRef.current.getVoices();
       if (voices.length > 0) {
+        const langPrefix = langCode.split('-')[0].toLowerCase();
         const preferredVoice =
           voices.find(
             (v) =>
-              v.lang.startsWith('en') &&
+              v.lang.toLowerCase().startsWith(langPrefix) &&
               (v.name.includes('Google') ||
                 v.name.includes('Natural') ||
+                v.name.includes('Neural') ||
                 v.name.includes('Samantha') ||
-                v.name.includes('Karen') ||
                 v.name.includes('Daniel') ||
-                v.name.includes('Zira'))
-          ) || voices[0];
-        utterance.voice = preferredVoice;
+                v.name.includes('Zira') ||
+                v.name.includes('Yuri') ||
+                v.name.includes('Luciana') ||
+                v.name.includes('Mei-Jia') ||
+                v.name.includes('Kanya'))
+          ) ||
+          voices.find((v) => v.lang.toLowerCase().startsWith(langPrefix)) ||
+          voices[0];
+
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+        }
       }
 
       utterance.onstart = () => {

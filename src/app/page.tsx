@@ -50,16 +50,16 @@ export default function LandingPage() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-600 to-red-500 flex items-center justify-center text-white shadow-lg shadow-rose-600/30 group-hover:scale-105 transition-transform">
-              <Home className="w-5 h-5 fill-white/20" />
+              <Sparkles className="w-5 h-5 fill-white/20" />
             </div>
             <div className="font-black text-xl tracking-tight text-white flex items-center gap-1">
-              <span>EstateCall</span>
+              <span>CallFlow</span>
               <span className="text-rose-500 font-extrabold">AI</span>
             </div>
           </Link>
 
           {/* Links */}
-          <nav className="hidden md:flex items-center gap-8 text-xs font-semibold text-slate-300">
+          <nav className="hidden md:flex items-center gap-7 text-xs font-semibold text-slate-300">
             <a href="#features" className="hover:text-rose-400 transition-colors">
               Features
             </a>
@@ -72,24 +72,27 @@ export default function LandingPage() {
             <a href="#demo" className="hover:text-rose-400 transition-colors">
               Demo
             </a>
-            <Link href="/widget-demo" className="hover:text-rose-400 transition-colors">
-              Widget
+            <Link href="/portal" className="hover:text-rose-400 transition-colors">
+              Client Portal
+            </Link>
+            <Link href="/admin" className="hover:text-rose-400 transition-colors text-red-400">
+              Super Admin
             </Link>
           </nav>
 
           {/* Right Action Buttons */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link
               href="/login"
               className="text-xs font-semibold text-slate-300 hover:text-white transition-colors"
             >
-              Sign in
+              Sign In
             </Link>
             <Link
               href="/dashboard"
               className="px-5 py-2.5 rounded-full bg-gradient-to-r from-rose-600 to-red-500 hover:from-rose-500 hover:to-red-400 text-white font-bold text-xs shadow-lg shadow-rose-600/30 flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
             >
-              <span>GaaS Steady</span>
+              <span>Get Started Free</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

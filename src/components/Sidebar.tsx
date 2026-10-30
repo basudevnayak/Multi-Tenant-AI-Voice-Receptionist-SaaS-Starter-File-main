@@ -20,29 +20,55 @@ import {
   Home,
   ExternalLink,
   Sparkles,
+  ShoppingBag,
+  Layers,
+  HelpCircle,
+  Bell,
+  Globe,
+  ShieldCheck,
+  UserCheck,
 } from 'lucide-react';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { openCallModal } = useVoiceStore();
-  const { getActiveBusiness, getActiveAgents, getActiveCalls, getActiveAppointments, getActiveLeads } =
-    useBusinessStore();
+  const {
+    getActiveBusiness,
+    getActiveAgents,
+    getActiveCalls,
+    getActiveAppointments,
+    getActiveLeads,
+    getActiveCatalogItems,
+    getActiveOrders,
+    getActiveSupportTickets,
+    getActiveNotifications,
+  } = useBusinessStore();
 
   const business = getActiveBusiness();
   const agents = getActiveAgents();
   const calls = getActiveCalls();
   const appointments = getActiveAppointments();
   const leads = getActiveLeads();
+  const catalogItems = getActiveCatalogItems();
+  const orders = getActiveOrders();
+  const tickets = getActiveSupportTickets();
+  const notifications = getActiveNotifications();
+  const unreadNotifs = notifications.filter((n) => !n.isRead).length;
 
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'AI Voice Agents', href: '/agents', icon: Bot, badge: agents.length.toString() },
-    { name: 'Call History', href: '/calls', icon: PhoneCall, badge: calls.length.toString() },
+    { name: 'Catalog & Services', href: '/catalog', icon: Layers, badge: catalogItems.length.toString() },
+    { name: 'Storefront & Orders', href: '/storefront', icon: ShoppingBag, badge: orders.length.toString() },
     { name: 'Appointments', href: '/appointments', icon: CalendarDays, badge: appointments.length.toString() },
+    { name: 'Call History', href: '/calls', icon: PhoneCall, badge: calls.length.toString() },
     { name: 'CRM Leads', href: '/leads', icon: Users, badge: leads.length.toString() },
+    { name: 'Support Desk', href: '/support', icon: HelpCircle, badge: tickets.length.toString() },
+    { name: 'Website Builder', href: '/website', icon: Globe },
     { name: 'Outbound Campaigns', href: '/campaigns', icon: Megaphone },
     { name: 'Knowledge Base', href: '/knowledge', icon: BookOpen },
     { name: 'Voice Widget', href: '/widget', icon: Code2 },
+    { name: 'Notifications', href: '/notifications', icon: Bell, badge: unreadNotifs > 0 ? unreadNotifs.toString() : undefined },
     { name: 'Settings & Numbers', href: '/settings', icon: Settings },
     { name: 'Billing & Plans', href: '/billing', icon: CreditCard },
   ];
@@ -106,7 +132,7 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Live AI Test Button */}
+      {/* Live AI Test & Portal Switcher */}
       <div className="p-3 border-t border-white/5 bg-black/20 space-y-2">
         <button
           onClick={() => openCallModal()}
@@ -116,16 +142,22 @@ export default function Sidebar() {
           <span>Test AI Voice Live</span>
         </button>
 
-        {business?.slug && (
+        <div className="grid grid-cols-2 gap-1.5 pt-1">
           <Link
-            href={`/sites/${business.slug}`}
-            target="_blank"
-            className="w-full py-1.5 px-3 bg-white/5 hover:bg-white/10 text-slate-300 rounded-xl text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors border border-white/5"
+            href="/portal"
+            className="py-1.5 px-2 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg text-[10px] font-semibold flex items-center justify-center gap-1 transition-colors border border-white/5"
           >
-            <span>Preview Client Portal</span>
-            <ExternalLink className="w-3 h-3 text-slate-400" />
+            <UserCheck className="w-3 h-3 text-rose-400" />
+            <span>Client Portal</span>
           </Link>
-        )}
+          <Link
+            href="/admin"
+            className="py-1.5 px-2 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg text-[10px] font-semibold flex items-center justify-center gap-1 transition-colors border border-white/5"
+          >
+            <ShieldCheck className="w-3 h-3 text-red-400" />
+            <span>Super Admin</span>
+          </Link>
+        </div>
       </div>
 
       {/* Bottom Tenant Usage Progress */}

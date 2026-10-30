@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRealtimeVoice } from '@/hooks/useRealtimeVoice';
+import { SUPPORTED_LANGUAGES } from '@/constants';
 import {
   PhoneOff,
   Mic,
@@ -17,6 +18,7 @@ import {
   PhoneCall,
   X,
   Radio,
+  Languages,
 } from 'lucide-react';
 
 export default function VoiceCallModal() {
@@ -32,8 +34,11 @@ export default function VoiceCallModal() {
   } = useRealtimeVoice();
 
   const [textInput, setTextInput] = useState('');
+  const [selectedLanguage, setSelectedLanguage] = useState(activeAgent?.language || 'en-US');
 
   if (!voiceStore.isOpen) return null;
+
+  const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage) || SUPPORTED_LANGUAGES[0];
 
   const formatDuration = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -42,10 +47,10 @@ export default function VoiceCallModal() {
   };
 
   const samplePrompts = [
-    'I would like to schedule a private property viewing tomorrow.',
-    'What are your available listings and pricing details?',
-    'What are your office hours and location?',
-    'Can you please connect me to a senior broker or human agent?',
+    'I would like to schedule an appointment for next Saturday.',
+    'What services and catalog products do you offer?',
+    'What are your office hours and address?',
+    'Can you please connect me to a human representative?',
   ];
 
   const handleSubmitText = (e: React.FormEvent) => {
@@ -80,12 +85,29 @@ export default function VoiceCallModal() {
               </div>
               <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
                 <Building2 className="w-3.5 h-3.5 text-rose-400" />
-                {activeBusiness?.name || 'Business Voice Line'}
+                <span>{activeBusiness?.name || 'Business Voice Line'}</span>
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Real-time Language Switcher */}
+            <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-xl px-2 py-1">
+              <Languages className="w-3.5 h-3.5 text-rose-400" />
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="bg-transparent text-xs text-slate-200 font-semibold focus:outline-none cursor-pointer"
+                title="Select calling language (60+ supported)"
+              >
+                {SUPPORTED_LANGUAGES.map((l) => (
+                  <option key={l.code} value={l.code} className="bg-slate-900 text-white">
+                    {l.flag} {l.nativeName} ({l.name})
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {voiceStore.isCalling && (
               <div className="flex items-center gap-1.5 px-3 py-1 bg-rose-950/60 rounded-full text-xs font-bold text-rose-300 border border-rose-500/30">
                 <Clock className="w-3.5 h-3.5 animate-pulse" />
